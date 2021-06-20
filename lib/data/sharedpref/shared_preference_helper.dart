@@ -20,6 +20,29 @@ class SharedPreferenceHelper {
     return _sharedPreference.setString(Preferences.auth_token, authToken);
   }
 
+  // Future<bool> saveUserName(String username) async {
+  //   return _sharedPreference.setString(Preferences.name, username);
+  // }
+  //
+  // Future<String?> get username async {
+  //   return _sharedPreference.getString(Preferences.name);
+  // }
+
+  Future<bool> saveUserEmail(String email) async {
+    return _sharedPreference.setString(Preferences.email, email);
+  }
+  Future<String?> get email async {
+    return _sharedPreference.getString(Preferences.email);
+  }
+
+  Future<bool> saveUserPassword(String password) async {
+    return _sharedPreference.setString(Preferences.pass, password);
+  }
+
+  Future<String?> get password async {
+    return _sharedPreference.getString(Preferences.email);
+  }
+
   Future<bool> removeAuthToken() async {
     return _sharedPreference.remove(Preferences.auth_token);
   }

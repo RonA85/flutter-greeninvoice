@@ -1,20 +1,27 @@
 import 'package:another_flushbar/flushbar_helper.dart';
-import 'package:boilerplate/constants/assets.dart';
 import 'package:boilerplate/data/sharedpref/constants/preferences.dart';
+import 'package:boilerplate/di/components/service_locator.dart';
+import 'package:boilerplate/models/user/user.dart';
+import 'package:boilerplate/ui/welcome/welcome.dart';
+import 'package:boilerplate/utils/helper.dart';
 import 'package:boilerplate/utils/routes/routes.dart';
-import 'package:boilerplate/stores/form/form_store.dart';
-import 'package:boilerplate/stores/theme/theme_store.dart';
 import 'package:boilerplate/utils/device/device_utils.dart';
 import 'package:boilerplate/utils/locale/app_localization.dart';
-import 'package:boilerplate/widgets/app_icon_widget.dart';
-import 'package:boilerplate/widgets/empty_app_bar_widget.dart';
-import 'package:boilerplate/widgets/progress_indicator_widget.dart';
+import 'package:boilerplate/utils/styles/Colors.dart';
+import 'package:boilerplate/utils/styles/TextStyles.dart';
 import 'package:boilerplate/widgets/rounded_button_widget.dart';
+import 'package:boilerplate/widgets/social_rounded_button_widget.dart';
 import 'package:boilerplate/widgets/textfield_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:boilerplate/utils/extenstions/WidgetExtensions.dart';
+
+import '../../stores/user/user_store.dart';
+
+final store = getIt<UserStore>();
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -27,13 +34,11 @@ class _LoginScreenState extends State<LoginScreen> {
   TextEditingController _passwordController = TextEditingController();
 
   //stores:---------------------------------------------------------------------
-  late ThemeStore _themeStore;
+  // late ThemeStore _themeStore;
 
   //focus node:-----------------------------------------------------------------
   late FocusNode _passwordFocusNode;
 
-  //stores:---------------------------------------------------------------------
-  final _store = FormStore();
 
   @override
   void initState() {
@@ -44,83 +49,51 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _themeStore = Provider.of<ThemeStore>(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       primary: true,
-      appBar: EmptyAppBar(),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        title: SvgPicture.asset(
+          "assets/images/green_logo.svg",
+          color: primary,
+        ),
+        actions: [Icon(Icons.menu).paddingWidget(right: 16)],
+      ),
       body: _buildBody(),
     );
   }
 
   // body methods:--------------------------------------------------------------
   Widget _buildBody() {
-    return Material(
-      child: Stack(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          MediaQuery.of(context).orientation == Orientation.landscape
-              ? Row(
-                  children: <Widget>[
-                    Expanded(
-                      flex: 1,
-                      child: _buildLeftSide(),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: _buildRightSide(),
-                    ),
-                  ],
-                )
-              : Center(child: _buildRightSide()),
-          Observer(
-            builder: (context) {
-              return _store.success
-                  ? navigate(context)
-                  : _showErrorMessage(_store.errorStore.errorMessage);
-            },
+          Spacer(),
+          Text(
+            "היי, טוב לראות אותך",
+            textAlign: TextAlign.center,
+            style: almoni40,
           ),
-          Observer(
-            builder: (context) {
-              return Visibility(
-                visible: _store.loading,
-                child: CustomProgressIndicatorWidget(),
-              );
-            },
-          )
+          _buildUserIdField().paddingWidget(bottom: 20, top: 40),
+          _buildPasswordField(),
+          Spacer(
+            flex: 1,
+          ),
+          _buildSignInButton().paddingWidget(bottom: 20),
+          _buildGoogleButton(),
+          Spacer(
+            flex: 2,
+          ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildLeftSide() {
-    return SizedBox.expand(
-      child: Image.asset(
-        Assets.carBackground,
-        fit: BoxFit.cover,
-      ),
-    );
-  }
-
-  Widget _buildRightSide() {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            AppIconWidget(image: 'assets/icons/ic_appicon.png'),
-            SizedBox(height: 24.0),
-            _buildUserIdField(),
-            _buildPasswordField(),
-            _buildForgotPasswordButton(),
-            _buildSignInButton()
-          ],
-        ),
       ),
     );
   }
@@ -128,21 +101,21 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildUserIdField() {
     return Observer(
       builder: (context) {
-        return TextFieldWidget(
-          hint: AppLocalizations.of(context).translate('login_et_user_email'),
-          inputType: TextInputType.emailAddress,
-          icon: Icons.person,
-          iconColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
-          textController: _userEmailController,
-          inputAction: TextInputAction.next,
-          autoFocus: false,
-          onChanged: (value) {
-            _store.setUserId(_userEmailController.text);
-          },
-          onFieldSubmitted: (value) {
-            FocusScope.of(context).requestFocus(_passwordFocusNode);
-          },
-          errorText: _store.formErrorStore.userEmail,
+        return Column(
+          children: [
+            TextFieldWidget(
+              //hint: AppLocalizations.of(context).translate('login_et_user_email'),
+              hint: 'מייל',
+              inputType: TextInputType.emailAddress,
+              textController: _userEmailController,
+              inputAction: TextInputAction.next,
+              autoFocus: false,
+              //errorText: _store.formErrorStore.userEmail,
+              errorText: null,
+              infoText: "כתובת המייל איתה נרשמת לחשבונית ירוקה",
+              infoAction: false,
+            ),
+          ],
         );
       },
     );
@@ -152,18 +125,17 @@ class _LoginScreenState extends State<LoginScreen> {
     return Observer(
       builder: (context) {
         return TextFieldWidget(
-          hint:
-              AppLocalizations.of(context).translate('login_et_user_password'),
+          hint: 'סיסמה',
+          // hint:
+          //     AppLocalizations.of(context).translate('login_et_user_password'),
           isObscure: true,
           padding: EdgeInsets.only(top: 16.0),
-          icon: Icons.lock,
-          iconColor: _themeStore.darkMode ? Colors.white70 : Colors.black54,
           textController: _passwordController,
           focusNode: _passwordFocusNode,
-          errorText: _store.formErrorStore.password,
-          onChanged: (value) {
-            _store.setPassword(_passwordController.text);
-          },
+          // errorText: _store.formErrorStore.password,
+          errorText: null,
+          infoAction: true,
+          infoText: "שכחת סיסמה?",
         );
       },
     );
@@ -188,13 +160,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildSignInButton() {
     return RoundedButtonWidget(
-      buttonText: AppLocalizations.of(context).translate('login_btn_sign_in'),
-      buttonColor: Colors.orangeAccent,
+      buttonText: 'כניסה',
+      buttonColor: primary,
       textColor: Colors.white,
       onPressed: () async {
-        if (_store.canLogin) {
+        if (_userEmailController.text.isNotEmpty &&
+            _passwordController.text.isNotEmpty) {
           DeviceUtils.hideKeyboard(context);
-          _store.login();
+          final user = await store.login(
+              _userEmailController.text, _passwordController.text);
+          if (user.email != null) {
+            pushAndRemoveUntil(context, WelcomeScreen(user: user,), false);
+          }
         } else {
           _showErrorMessage('Please fill in all fields');
         }
@@ -202,18 +179,17 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget navigate(BuildContext context) {
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.setBool(Preferences.is_logged_in, true);
-    });
-
-    Future.delayed(Duration(milliseconds: 0), () {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-          Routes.home, (Route<dynamic> route) => false);
-    });
-
-    return Container();
+  Widget _buildGoogleButton() {
+    return SocialRoundedButtonWidget(
+      logo: "google_icon",
+      buttonText: 'כניסה מהירה',
+      buttonColor: Colors.orangeAccent,
+      textColor: Colors.white,
+      onPressed: () async {
+      },
+    );
   }
+
 
   // General Methods:-----------------------------------------------------------
   _showErrorMessage(String message) {

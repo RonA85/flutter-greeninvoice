@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 
-class EmptyAppBar extends StatelessWidget implements PreferredSizeWidget {
+class GeneralAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Container(
+      child: Row(
+
+      ),
+    );
   }
 
   @override

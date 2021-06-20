@@ -1,8 +1,8 @@
-import 'package:boilerplate/stores/error/error_store.dart';
+import 'package:boilerplate/models/user/user.dart';
+
 import 'package:mobx/mobx.dart';
 
 import '../../data/repository.dart';
-import '../form/form_store.dart';
 
 part 'user_store.g.dart';
 
@@ -12,18 +12,11 @@ abstract class _UserStore with Store {
   // repository instance
   final Repository _repository;
 
-  // store for handling form errors
-  final FormErrorStore formErrorStore = FormErrorStore();
-
-  // store for handling error messages
-  final ErrorStore errorStore = ErrorStore();
-
   // bool to check if current user is logged in
   bool isLoggedIn = false;
 
   // constructor:---------------------------------------------------------------
   _UserStore(Repository repository) : this._repository = repository {
-
     // setting up disposers
     _setupDisposers();
 
@@ -43,39 +36,35 @@ abstract class _UserStore with Store {
   }
 
   // empty responses:-----------------------------------------------------------
-  static ObservableFuture<bool> emptyLoginResponse =
-  ObservableFuture.value(false);
+  static ObservableFuture<User> emptyLoginResponse =
+      ObservableFuture.value(User());
 
   // store variables:-----------------------------------------------------------
   @observable
   bool success = false;
 
   @observable
-  ObservableFuture<bool> loginFuture = emptyLoginResponse;
+  ObservableFuture<User> loginFuture = emptyLoginResponse;
 
   @computed
   bool get isLoading => loginFuture.status == FutureStatus.pending;
 
   // actions:-------------------------------------------------------------------
-  @action
-  Future login(String email, String password) async {
 
-    final future = _repository.login(email, password);
-    loginFuture = ObservableFuture(future);
-    await future.then((value) async {
-      if (value) {
-        _repository.saveIsLoggedIn(true);
-        this.isLoggedIn = true;
-        this.success = true;
-      } else {
-        print('failed to login');
-      }
-    }).catchError((e) {
-      print(e);
+  @action
+  Future<User> login(String email, String password) async {
+    final user = await _repository.login(email, password);
+    if(user.email!=null){
+      _repository.saveIsLoggedIn(true);
+      _repository.saveUserDetails(email, password);
+      this.isLoggedIn = true;
+      this.success = true;
+      return Future.value(user);
+    }else{
       this.isLoggedIn = false;
       this.success = false;
-      throw e;
-    });
+      return Future.value(User());
+    }
   }
 
   logout() {
